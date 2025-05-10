@@ -8,17 +8,19 @@ use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
-    public function show()
+    public function show(Request $request)
     {
-        return response()->json(Auth::user());
+        return response()->json($request->user());
     }
 
     public function update(Request $request)
     {
-        $user = Auth::user();
+         $user = $request->user();
 
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
+            'firstname' => 'sometimes|string|max:255',
+            'lastname' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 

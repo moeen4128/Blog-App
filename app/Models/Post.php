@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
-     protected $fillable = ['title', 'content', 'user_id', 'status', 'featured_image'];
+     protected $fillable = ['title', 'content', 'user_id', 'status', 'featured_image','categories', 'tags'];
+     protected $casts = ['categories' => 'array', 'tags' => 'array'];
      public function comments()
     {
         return $this->hasMany(Comment::class);
@@ -15,12 +16,5 @@ class Post extends Model
     {
         return $this->belongsTo(User::class);
     }
-      public function categories()
-    {
-        return $this->belongsToMany(Category::class, 'category_post');
-    }
-    public function tags()
-    {
-        return $this->belongsToMany(Tag::class, 'post_tag');
-    }
+    
 }

@@ -10,13 +10,13 @@ class PostController extends Controller
 
    public function index(Request $request)
     {
-        $posts = Post::where('status', 'published')->get();
+        $posts = Post::where('status', 'published')->with('user')->get();
         return response()->json($posts);
     }
 
     public function show($id)
     {
-        $post = Post::with('comments')->find($id);
+          $post = Post::with('user', 'comments.user')->findOrFail($id);
 
         if (!$post) {
             return response()->json(['message' => 'Post not found'], 404);
@@ -25,29 +25,18 @@ class PostController extends Controller
         return response()->json($post);
     }
 
-     public function filterByCategory(Request $request)
-    {
-        if ($request->has('category')) {
-            $posts = Post::whereHas('categories', function ($query) use ($request) {
-                $query->where('name', $request->category);
-            })->get();
-
-            return response()->json($posts);
-        }
-
-        return response()->json(['message' => 'Category parameter is required'], 400);
-    }
 
 
     public function store(Request $request)
     {
         try {
-            // Logic to create a new post
             $validatedData = $request->validate([
                 'title' => 'required|string|max:255',
                 'content' => 'required|string',
                 'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'status' => 'in:draft,published'
+                'status' => 'in:draft,published',
+                'categories' => 'nullable|array',
+                'tags' => 'nullable|array',
             ]);
 
             $path = $request->hasFile('featured_image')
@@ -58,7 +47,9 @@ class PostController extends Controller
                 'content' => $validatedData['content'],
                 'featured_image' => $path,
                 'status' => $validatedData['status'] ?? 'draft',
-                'user_id' => auth()->id()
+                'categories' => $validated['categories'] ?? [],
+                'tags' => $validated['tags'] ?? [],
+                 'user_id' => $request->user()->id,
             ]);
             return response()->json(['message' => 'Post created successfully', 'post' => $post], 201);
         } catch (\Exception $e) {
@@ -77,7 +68,9 @@ class PostController extends Controller
                 'title' => 'sometimes|required|string|max:255',
                 'content' => 'sometimes|required|string',
                 'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'status' => 'sometimes|in:draft,published'
+                'status' => 'sometimes|in:draft,published',
+                'categories' => 'nullable|array',
+                'tags' => 'nullable|array',
             ]);
 
 
@@ -92,6 +85,8 @@ class PostController extends Controller
                 'content' => $validatedData['content'] ?? $post->content,
                 'status' => $validatedData['status'] ?? $post->status,
                 'featured_image' => $validatedData['featured_image'] ?? $post->featured_image,
+                'categories' => $validatedData['categories'] ?? $post->categories,
+                'tags' => $validatedData['tags'] ?? $post->tags,
             ]);
 
             return response()->json(['message' => 'Post updated successfully', 'post' => $post], 200);

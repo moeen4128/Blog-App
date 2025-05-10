@@ -15,7 +15,7 @@ class CommentController extends Controller
         ]);
 
         $comment = Comment::create([
-            'user_id' => auth()->id(),
+            'user_id' => $request->user()->id,
             'post_id' => $validated['post_id'],
             'content' => $validated['content'],
             'status' => 'pending', // Default status
@@ -29,16 +29,16 @@ class CommentController extends Controller
 
     public function updateStatus(Request $request, $id)
     {
+        $comment = Comment::findOrFail($id);
         $validated = $request->validate([
-            'status' => 'required|in:approved,rejected'
+            'status' => 'required|in:approved,rejected,pending',
         ]);
 
-        $comment = Comment::find($id);
         if (!$comment) {
             return response()->json(['message' => 'Comment not found'], 404);
         }
 
-        $comment->status = $validated['status'];
+        $comment->update($validated);
         $comment->save();
 
         return response()->json([
@@ -53,13 +53,6 @@ class CommentController extends Controller
         if (!$comment) {
             return response()->json(['message' => 'Comment not found'], 404);
         }
-
-        // Optional: You can assume this is already covered in middleware
-        // or keep this if needed for safety
-        if (auth()->id() !== $comment->user_id && auth()->user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         $comment->delete();
 
         return response()->json(['message' => 'Comment deleted successfully']);

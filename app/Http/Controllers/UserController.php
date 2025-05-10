@@ -9,7 +9,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::all(); // optionally use pagination
+        $users = User::all(); 
         return response()->json($users);
     }
 
@@ -21,7 +21,8 @@ class UserController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
+            'firstname' => 'sometimes|string|max:255',
+            'lastname' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|unique:users,email,' . $id,
             'role' => 'sometimes|in:user,admin'
         ]);
